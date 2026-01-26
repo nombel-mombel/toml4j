@@ -1,13 +1,10 @@
 package com.moandjiezana.toml;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static com.moandjiezana.toml.MapValueWriter.MAP_VALUE_WRITER;
-import static com.moandjiezana.toml.TableArrayValueWriter.TABLE_ARRAY_VALUE_WRITER;
-import static com.moandjiezana.toml.ValueWriters.WRITERS;
 
 class ObjectValueWriter implements ValueWriter {
   static final ValueWriter OBJECT_VALUE_WRITER = new ObjectValueWriter();
@@ -19,7 +16,7 @@ class ObjectValueWriter implements ValueWriter {
 
   @Override
   public void write(Object value, WriterContext context) {
-    write(value, context, null);
+    write(value, context, null, null);
   }
 
   private ObjectValueWriter() {
@@ -60,35 +57,33 @@ class ObjectValueWriter implements ValueWriter {
     return false;
   }
 
-  public void write(Object value, WriterContext context, String[] objectComment) {
+  public void write(Object value, WriterContext context, Map<String, String[]> nestedOverlay, String[] objectComment) {
     final Map<String, Object> to = new LinkedHashMap<>();
     final Set<Field> fields = getFields(value.getClass());
 
-    final ArrayList<String[]> comments = new ArrayList<>();
-    final ArrayList<String[]> objComments = new ArrayList<>();
+    final Map<String, String[]> comments = new HashMap<>();
+    final Map<String, Map<String, String[]>> nestedComments = new HashMap<>();
 
     for (Field field : fields) {
       final Object fieldValue = getFieldValue(field, value);
       to.put(field.getName(), fieldValue);
-      final ValueWriter valueWriter = WRITERS.findWriterFor(fieldValue);
       if (field.isAnnotationPresent(TomlComment.class)) {
-        for (Annotation a : field.getAnnotations()) {
-          if (a instanceof TomlComment) {
-            TomlComment comment = (TomlComment) a;
-            if (valueWriter == OBJECT_VALUE_WRITER || valueWriter == TABLE_ARRAY_VALUE_WRITER)
-              objComments.add(comment.value());
-            else
-              comments.add(comment.value());
-            break;
-          }
-        }
-      } else {
-        if (valueWriter == OBJECT_VALUE_WRITER || valueWriter == TABLE_ARRAY_VALUE_WRITER)
-          objComments.add(null);
-        else
-          comments.add(null);
+        TomlComment comment = field.getAnnotation(TomlComment.class);
+        comments.put(field.getName(), comment.value());
       }
+      if (field.isAnnotationPresent(TomlMapComments.class)) {
+        TomlMapComments mapComments = field.getAnnotation(TomlMapComments.class);
+        Map<String, String[]> nested = new HashMap<>();
+        for (TomlMapComment mapComment : mapComments.value()) {
+          nested.put(mapComment.key(), mapComment.value());
+        }
+        nestedComments.put(field.getName(), nested);
+      }
+
     }
-    ((MapValueWriter) MAP_VALUE_WRITER).write(to, context, comments, objComments, objectComment);
+    if (nestedOverlay != null) {
+      comments.putAll(nestedOverlay);
+    }
+    ((MapValueWriter) MAP_VALUE_WRITER).write(to, context, comments, nestedComments, objectComment);
   }
 }

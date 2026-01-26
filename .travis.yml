@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - oraclejdk11
-  - openjdk11
+  - oraclejdk16
+  - openjdk16
 after_success:
   - mvn clean test jacoco:report coveralls:report
