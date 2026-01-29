@@ -1,5 +1,7 @@
 package com.moandjiezana.toml;
 
+import com.moandjiezana.toml.comments.CommentData;
+
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,13 +52,17 @@ class MapValueWriter implements ValueWriter {
 
   @Override
   public void write(Object value, WriterContext context) {
-    write(value, context, null, null, null);
+    write(value, context, null);
   }
 
-  public void write(Object value, WriterContext context, final Map<String, String[]> comments, final Map<String, Map<String, String[]>> nestedComments, final String[] objectComment) {
+  public void write(Object value, WriterContext context, CommentData commentData) {
+    CommentData data = commentData;
+    if (data == null) {
+      data = new CommentData(null);
+    }
     Map<?, ?> from = (Map<?, ?>) value;
     if (hasPrimitiveValues(from, context)) {
-      context.writeKey(objectComment);
+      context.writeKey(data.getComment());
     }
 
     // Render primitive types and arrays of primitive first so they are
@@ -64,12 +70,20 @@ class MapValueWriter implements ValueWriter {
     for (Object key : from.keySet()) {
       Object fromValue = from.get(key);
       if (fromValue == null) {
+        if (data.hasChildWithNullComment(key.toString())) {
+          if (data.hasChildWithComment(key.toString())) {
+            addComments(data.getChild(key.toString()).getComment(), context);
+          }
+          String[] nullComment = new String[1];
+          nullComment[0] = key + " = " + data.getChild(key.toString()).getNullComment();
+          addComments(nullComment, context);
+        }
         continue;
       }
       ValueWriter valueWriter = WRITERS.findWriterFor(fromValue);
-      if (comments != null && comments.containsKey(key.toString())) {
+      if (data.hasChildWithComment(key.toString())) {
         if (valueWriter.isPrimitiveType() || valueWriter == PRIMITIVE_ARRAY_VALUE_WRITER)
-          addComments(comments.get(key.toString()), context);
+          addComments(data.getChild(key.toString()).getComment(), context);
       }
       if (valueWriter.isPrimitiveType()) {
         context.indent();
@@ -93,22 +107,19 @@ class MapValueWriter implements ValueWriter {
       }
 
       ValueWriter valueWriter = WRITERS.findWriterFor(fromValue);
-      final boolean hasComment = comments != null && comments.containsKey(key.toString());
+      final boolean hasComment = data.hasChildWithComment(key.toString());
       if (valueWriter == this || valueWriter == TABLE_ARRAY_VALUE_WRITER) {
-        if (comments != null && comments.containsKey(key.toString())) {
+        if (hasComment) {
           context.write('\n');
-          addComments(comments.get(key.toString()), context);
+          addComments(data.getChild(key.toString()).getComment(), context);
         }
         if (valueWriter == this) {
-          Map<String, String[]> nestedOverlay = nestedComments != null ? nestedComments.get(key.toString()) : null;
-          this.write(fromValue, context.pushTable(quoteKey(key)), nestedOverlay, null, null);
+          this.write(fromValue, context.pushTable(quoteKey(key)), data.getChild(key.toString()));
         } else {
           valueWriter.write(fromValue, context.pushTable(quoteKey(key)));
         }
       } else if (valueWriter == ObjectValueWriter.OBJECT_VALUE_WRITER) {
-        String[] comment = hasComment ? comments.get(key.toString()) : null;
-        Map<String, String[]> nestedOverlay = nestedComments != null ? nestedComments.get(key.toString()) : null;
-        ((ObjectValueWriter) valueWriter).write(fromValue, context.pushTable(quoteKey(key)), nestedOverlay, comment);
+        ((ObjectValueWriter) valueWriter).write(fromValue, context.pushTable(quoteKey(key)), data.getChild(key.toString()));
       }
     }
   }

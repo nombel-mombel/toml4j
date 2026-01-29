@@ -1,5 +1,8 @@
 package com.moandjiezana.toml;
 
+import com.moandjiezana.toml.comments.TomlComment;
+import com.moandjiezana.toml.comments.TomlMapComment;
+import com.moandjiezana.toml.comments.TomlNullComment;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -117,5 +120,20 @@ public class TomlCommentInjectionTest {
         @TomlMapComment(key = "A", value = "AA")
         @TomlMapComment(key = "B", value = "BB")
         public Map<KEY, ValueTestClass> test = new TreeMap<>(Map.of(KEY.A, new ValueTestClass(), KEY.B, new ValueTestClass()));
+    }
+    @Test
+    public void should_add_null_comment() {
+        TomlWriter writer = new TomlWriter();
+        String expected = """
+                # This is a null value
+                # value = example
+                """;
+        Assert.assertEquals(expected, writer.write(new NullCommentTestClass()));
+    }
+
+    static class NullCommentTestClass {
+        @TomlComment("This is a null value")
+        @TomlNullComment("example")
+        public String value;
     }
 }

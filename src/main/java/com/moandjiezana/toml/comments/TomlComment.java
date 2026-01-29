@@ -1,4 +1,4 @@
-package com.moandjiezana.toml;
+package com.moandjiezana.toml.comments;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,5 +1,11 @@
 package com.moandjiezana.toml;
 
+import com.moandjiezana.toml.comments.CommentData;
+import com.moandjiezana.toml.comments.TomlComment;
+import com.moandjiezana.toml.comments.TomlMapComment;
+import com.moandjiezana.toml.comments.TomlMapComments;
+import com.moandjiezana.toml.comments.TomlNullComment;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -16,7 +22,7 @@ class ObjectValueWriter implements ValueWriter {
 
   @Override
   public void write(Object value, WriterContext context) {
-    write(value, context, null, null);
+    write(value, context, null);
   }
 
   private ObjectValueWriter() {
@@ -57,33 +63,33 @@ class ObjectValueWriter implements ValueWriter {
     return false;
   }
 
-  public void write(Object value, WriterContext context, Map<String, String[]> nestedOverlay, String[] objectComment) {
+  public void write(Object value, WriterContext context, CommentData data) {
     final Map<String, Object> to = new LinkedHashMap<>();
     final Set<Field> fields = getFields(value.getClass());
-
-    final Map<String, String[]> comments = new HashMap<>();
-    final Map<String, Map<String, String[]>> nestedComments = new HashMap<>();
+    if (data == null) {
+      data = new CommentData(null);
+    }
 
     for (Field field : fields) {
       final Object fieldValue = getFieldValue(field, value);
       to.put(field.getName(), fieldValue);
       if (field.isAnnotationPresent(TomlComment.class)) {
         TomlComment comment = field.getAnnotation(TomlComment.class);
-        comments.put(field.getName(), comment.value());
+        data.addChild(field.getName(), comment.value());
       }
       if (field.isAnnotationPresent(TomlMapComments.class)) {
         TomlMapComments mapComments = field.getAnnotation(TomlMapComments.class);
-        Map<String, String[]> nested = new HashMap<>();
+        CommentData child = data.getOrCreateChild(field.getName());
         for (TomlMapComment mapComment : mapComments.value()) {
-          nested.put(mapComment.key(), mapComment.value());
+          child.addChild(mapComment.key(), mapComment.value());
         }
-        nestedComments.put(field.getName(), nested);
       }
-
+      if (field.isAnnotationPresent(TomlNullComment.class)) {
+        TomlNullComment nullComment = field.getAnnotation(TomlNullComment.class);
+        CommentData child = data.getOrCreateChild(field.getName());
+        child.setNullComment(nullComment.value());
+      }
     }
-    if (nestedOverlay != null) {
-      comments.putAll(nestedOverlay);
-    }
-    ((MapValueWriter) MAP_VALUE_WRITER).write(to, context, comments, nestedComments, objectComment);
+    ((MapValueWriter) MAP_VALUE_WRITER).write(to, context, data);
   }
 }

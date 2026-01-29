@@ -1,4 +1,4 @@
-package com.moandjiezana.toml;
+package com.moandjiezana.toml.comments;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface TomlMapComments {
-    TomlMapComment[] value();
+public @interface TomlNullComment {
+    String value();
 }
