@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.moandjiezana.toml</groupId>
+  <groupId>de.tronka.toml</groupId>
   <artifactId>toml4j</artifactId>
   <version>0.7.4-SNAPSHOT</version>
   <name>toml4j</name>
@@ -14,19 +14,15 @@
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git@github.com:mwanji/toml4j.git</connection>
-    <developerConnection>scm:git:git@github.com:mwanji/toml4j.git</developerConnection>
-    <url>https://github.com/mwanji/toml4j</url>
+    <connection>scm:git:git@github.com:nombel-mombel/toml4j.git</connection>
+    <developerConnection>scm:git:git@github.com:nombel-mombel/toml4j.git</developerConnection>
+    <url>https://github.com/nombel-mombel/toml4j</url>
     <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>Github Issues</system>
-    <url>https://github.com/mwanji/toml4j/issues</url>
+    <url>https://github.com/nombel-mombel/toml4j/issues</url>
   </issueManagement>
-  <ciManagement>
-    <system>Travis CI</system>
-    <url>https://travis-ci.org/mwanji/toml4j</url>
-  </ciManagement>
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -38,6 +34,10 @@
       <id>moandji.ezana</id>
       <name>Moandji Ezana</name>
       <email>mwanji@gmail.com</email>
+    </developer>
+    <developer>
+      <id>mombel.nombel</id>
+      <name>nombel-mombel</name>
     </developer>
   </developers>
   <inceptionYear>2013</inceptionYear>
